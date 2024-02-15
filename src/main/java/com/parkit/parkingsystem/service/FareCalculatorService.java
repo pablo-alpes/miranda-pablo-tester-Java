@@ -3,9 +3,9 @@
  *
  * It receives A ticket and stamps the entry and exit of the Car or Bike accordingly. Based
  * on it, it calculates the prices according the parking time and the fixed rates.
- * Integrates the fixed on the time conversion.
- *
- * @version: 1.0
+ * V.1.0 Integrates the fixed on the time conversion.
+ * V.1.1. Adds functionality of free parking if a client stays less or equal than 30 minutes.
+ * @version: 1.1
  * @author: Pablo Miranda
  * @date: 15-01-2024
  *
@@ -29,6 +29,11 @@ public class FareCalculatorService {
         //FIXED - Conversion to fraction of hours (int was insufficient to detect portions of hour)
         long duration = (outHour - inHour);
         float hours = (float) (duration) /1000/60/60; // Cast of duration to allow decimals
+
+        //NEW - We add the possibility to waive payment if duration is less than or equal to 30 minutes
+        if (hours <= 0.5) {
+            hours = 0;
+        }
 
         switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {
