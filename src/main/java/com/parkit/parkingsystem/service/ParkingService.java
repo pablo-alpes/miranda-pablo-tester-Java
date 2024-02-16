@@ -44,6 +44,10 @@ public class ParkingService {
                 ticket.setPrice(0);
                 ticket.setInTime(inTime);
                 ticket.setOutTime(null);
+                if (ticketDAO.getNbTicket(vehicleRegNumber)) { //NEW -- Adds the functionality of announcing the 5% discount for recurrent clients
+                    System.out.println("Heureux de vous revoir ! En tant qu’utilisateur régulier de " +
+                            "notre parking, vous allez obtenir une remise de 5%");
+                }
                 ticketDAO.saveTicket(ticket);
                 System.out.println("Generated Ticket and saved in DB");
                 System.out.println("Please park your vehicle in spot number:"+parkingSpot.getId());
@@ -103,7 +107,13 @@ public class ParkingService {
             Ticket ticket = ticketDAO.getTicket(vehicleRegNumber);
             Date outTime = new Date();
             ticket.setOutTime(outTime);
-            fareCalculatorService.calculateFare(ticket);
+            //we do apply the discount if it's a recurrent customer
+            if (ticketDAO.getNbTicket(vehicleRegNumber)) {
+                fareCalculatorService.calculateFare(ticket, true);
+            }
+            else {
+                fareCalculatorService.calculateFare(ticket, false);
+            }
             if(ticketDAO.updateTicket(ticket)) {
                 ParkingSpot parkingSpot = ticket.getParkingSpot();
                 parkingSpot.setAvailable(true);

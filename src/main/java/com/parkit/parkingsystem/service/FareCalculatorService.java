@@ -18,7 +18,7 @@ import com.parkit.parkingsystem.model.Ticket;
 
 public class FareCalculatorService {
 
-    public void calculateFare(Ticket ticket){
+    public void calculateFare(Ticket ticket, boolean discount){
         if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
@@ -34,6 +34,11 @@ public class FareCalculatorService {
         if (hours <= 0.5) {
             hours = 0;
         }
+        //NEW - We add the discount option when value is true, a 2nd boolean argument is added
+        if (discount == true) {
+            hours = (float) (0.95*hours);
+        }
+
 
         switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {

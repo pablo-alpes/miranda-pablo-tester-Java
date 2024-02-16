@@ -86,4 +86,8 @@ public class TicketDAO {
         }
         return false;
     }
+
+    public boolean getNbTicket(String vehicleRegNumber) { //on prend l'hypothèse que si la matricule existe, elle est dèja un client recurrent
+        return this.getTicket(vehicleRegNumber).getId() != 0;
+    }
 }
