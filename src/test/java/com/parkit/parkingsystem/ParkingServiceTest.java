@@ -67,7 +67,7 @@ class ParkingServiceTest {
         @Test
         @DisplayName("Issue once exiting - No ticket update")
         void processExitingVehicleTestUnableUpdate() {
-            when(ticketDAO.updateTicket(ticket)).thenReturn(false);
+            when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(false);
             parkingService.processExitingVehicle();
             verify(parkingSpotDAO, Mockito.times(0)).updateParking(any(ParkingSpot.class));
         }

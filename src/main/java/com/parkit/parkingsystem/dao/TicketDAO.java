@@ -31,12 +31,13 @@ public class TicketDAO {
             ps.setDouble(3, ticket.getPrice());
             ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
-            return ps.execute();
+            int rowsAffected = ps.executeUpdate(); //either INSERT or SAVE operations return true
+            return rowsAffected > 0; // boolean if edits in rows happen, which is a successful transaction in the DB
         }catch (Exception ex){
             logger.error("Error fetching next available slot",ex);
+            return false;
         }finally {
             dataBaseConfig.closeConnection(con);
-            return false;
         }
     }
 
@@ -88,6 +89,12 @@ public class TicketDAO {
     }
 
     public boolean getNbTicket(String vehicleRegNumber) { //on prend l'hypothèse que si la matricule existe, elle est dèja un client recurrent
-        return this.getTicket(vehicleRegNumber).getId() != 0;
+        Ticket ticket = this.getTicket(vehicleRegNumber);
+        if (ticket == null) { // in case the database is empty
+            return false;
+        }
+        else {
+            return ticket.getId() > 0;
+    }
     }
 }

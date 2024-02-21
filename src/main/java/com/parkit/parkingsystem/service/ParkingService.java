@@ -45,8 +45,8 @@ public class ParkingService {
                 ticket.setInTime(inTime);
                 ticket.setOutTime(null);
                 if (ticketDAO.getNbTicket(vehicleRegNumber)) { //NEW -- Adds the functionality of announcing the 5% discount for recurrent clients
-                    System.out.println("Heureux de vous revoir ! En tant qu’utilisateur régulier de " +
-                            "notre parking, vous allez obtenir une remise de 5%");
+                    System.out.println("Nice you came back ! As frequent user of " +
+                            "our parking service, you'll get 5% discount");
                 }
                 ticketDAO.saveTicket(ticket);
                 System.out.println("Generated Ticket and saved in DB");
