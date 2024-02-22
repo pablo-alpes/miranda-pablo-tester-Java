@@ -78,8 +78,8 @@ class ParkingDataBaseIT {
         parkingService.processIncomingVehicle();
 
         //VERIFY: Checks that a ticket is actually saved in DB and Parking table is updated with availability
-        assertEquals(true, ticketDAO.saveTicket(ticket)); //ticket is saved in DB?
-        assertEquals(true, availability); //availability is updated?
+        assertEquals(true, ticketDAO.saveTicket(ticket)); //ticket is saved in DB
+        assertEquals(true, availability); //availability is updated
     }
 
 
@@ -107,8 +107,7 @@ class ParkingDataBaseIT {
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         parkingService.processExitingVehicle();
 
-        //VERIFY
-        //TODO: check that the fare generated and out time are populated correctly in the database
-
+        //VERIFY - Check that the fare generated and out time are populated correctly in the database
+        assertEquals(true, ticketDAO.updateTicket(ticket)); //this instruction combines the both transactions needed
     }
 }
