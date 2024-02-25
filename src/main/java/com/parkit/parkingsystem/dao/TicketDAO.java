@@ -31,8 +31,10 @@ public class TicketDAO {
             ps.setDouble(3, ticket.getPrice());
             ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
-            int rowsAffected = ps.executeUpdate(); //either INSERT or SAVE operations return true
-            return rowsAffected > 0; // boolean if edits in rows happen, which is a successful transaction in the DB
+            ps.execute();
+            return true;
+            //int rowsAffected = ps.executeUpdate(); //either INSERT or SAVE operations return true
+            //return rowsAffected > 0; // boolean if edits in rows happen, which is a successful transaction in the DB
         }catch (Exception ex){
             logger.error("Error fetching next available slot",ex);
             return false;
@@ -62,12 +64,13 @@ public class TicketDAO {
             }
             dataBaseConfig.closeResultSet(rs);
             dataBaseConfig.closePreparedStatement(ps);
+            return ticket;
         }catch (Exception ex){
             logger.error("Error fetching next available slot",ex);
         }finally {
             dataBaseConfig.closeConnection(con);
-            return ticket;
         }
+        return ticket;
     }
 
     public boolean updateTicket(Ticket ticket) {
@@ -88,13 +91,17 @@ public class TicketDAO {
         return false;
     }
 
-    public boolean getNbTicket(String vehicleRegNumber) { //on prend l'hypothèse que si la matricule existe, elle est dèja un client recurrent
+    public boolean getNbTicket(String vehicleRegNumber) {
         Ticket ticket = this.getTicket(vehicleRegNumber);
         if (ticket == null) { // in case the database is empty
             return false;
+        } else {
+            boolean firstTime = ticket.getOutTime() == null || ticket.getOutTime().equals(ticket.getInTime());
+            if (firstTime) { // if first time in the park
+                return false;
+            } else {
+                return ticket.getId() > 0;
+            }
         }
-        else {
-            return ticket.getId() > 0;
-    }
     }
 }

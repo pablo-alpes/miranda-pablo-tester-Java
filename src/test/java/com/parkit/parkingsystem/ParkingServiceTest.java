@@ -74,7 +74,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    @DisplayName("Best case - The access of a Car goes OK")
+    @DisplayName("Best case - Car Parking OK")
     void testProcessIncomingVehicle() {
         try { //because of read selection, we need to capture the exception
             //ARRANGE - mock behaviour expected for the dependencies of the method .ProcessIncomingVehicle
