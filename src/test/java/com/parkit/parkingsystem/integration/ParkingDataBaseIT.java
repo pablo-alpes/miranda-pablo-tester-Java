@@ -7,25 +7,23 @@ import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
 import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
-import com.parkit.parkingsystem.service.FareCalculatorService;
 import com.parkit.parkingsystem.service.ParkingService;
 import com.parkit.parkingsystem.util.InputReaderUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.management.MemoryType;
 import java.util.Date;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 @ExtendWith(MockitoExtension.class)
 class ParkingDataBaseIT {
@@ -33,8 +31,7 @@ class ParkingDataBaseIT {
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAO ticketDAO;
     private static DataBasePrepareService dataBasePrepareService;
-    private Ticket ticket = new Ticket();
-    private FareCalculatorService fareCalculatorService = new FareCalculatorService();
+    //private Ticket ticket;
     @Mock
     private static InputReaderUtil inputReaderUtil;
 
@@ -55,21 +52,19 @@ class ParkingDataBaseIT {
 
     @AfterAll
     private static void tearDown() {
-
+        dataBasePrepareService.clearDataBaseEntries();
     }
-
-    @Test
-    @DisplayName("A car is correctly parked and its ticket saved in the database")
+    //Template for Car Parking
     void testParkingACar(String MatReg) throws Exception {
         //ARRANGE
         //ticket assigned
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(MatReg);
-        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false); //spot is available
-
-        boolean availability = parkingSpotDAO.updateParking(parkingSpot); // we check if the availability is well written in the DB
+        ParkingSpot parkingSpot = new ParkingSpot(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR), ParkingType.CAR, false); //spot is available
 
         //ACT
+        boolean availability = parkingSpotDAO.updateParking(parkingSpot); // we check if the availability is well written in the DB
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+
         parkingService.processIncomingVehicle();
 
         //VERIFY: Checks that a ticket is actually saved in DB and Parking table is updated with availability
@@ -80,39 +75,69 @@ class ParkingDataBaseIT {
     @Test
     @DisplayName("A car is correctly parked and its ticket saved in the database")
     void testParkingACar2() throws Exception {
-        //ARRANGE
-        //ticket assigned
-        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false); //spot is available
-
-        boolean availability = parkingSpotDAO.updateParking(parkingSpot); // we check if the availability is well written in the DB
-
-        //ACT
-        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-        parkingService.processIncomingVehicle();
-
-        //VERIFY: Checks that a ticket is actually saved in DB and Parking table is updated with availability
-        assertNotNull(ticketDAO.getTicket("ABCDEF")); //ticket is saved in DB
-        assertEquals(true, availability); //availability is updated
+        testParkingACar("ABC");
     }
 
 @ParameterizedTest
-@CsvSource({"true, ABCDEF", "false, MICKEY"}) // case with or without discount ticket once exiting
+@CsvSource({"false, alphabet","true, ABCDEF"}) // case with or without discount ticket once exiting
 void testParkingLotExit(boolean discount, String MatReg) throws Exception {
     //ARRANGE
-    if (discount == true) {
-        parkingSpotDAO = new ParkingSpotDAO();
-        ticketDAO = new TicketDAO();
-    }
+   //if (discount == true) {
+   //     parkingSpotDAO = new ParkingSpotDAO();
+    //    ticketDAO = new TicketDAO();
+    //}
+    ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+
     testParkingACar(MatReg);
     Thread.sleep(1000);
 
+    Ticket ticket = ticketDAO.getTicket(MatReg);
+    Date inTime = new Date();
+    Date outTime = new Date();
+    ticket.setPrice(0);
+    inTime.setTime( System.currentTimeMillis() - (  60 * 60 * 1000) );
+    ticket.setInTime(inTime);
+    ticket.setVehicleRegNumber(MatReg);
+    ticket.setParkingSpot(ticketDAO.getTicket(MatReg).getParkingSpot());
+    if (discount == false) {
+        ticketDAO.updateFullTicket(ticket);
+        ticket.setOutTime(null);
+        ticketDAO.saveTicket(ticket); //refreshes the ticket in the DB with the new inTime
+    }
+    else {
+        ticketDAO.updateFullTicket(ticket); //refreshes the ticket in the DB with the new inTime
+    }
+    parkingSpotDAO.updateParking(ticket.getParkingSpot());
 
     //ACT
-    ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
     parkingService.processExitingVehicle();
 
     //VERIFY - Check that the fare generated and out time are populated correctly in the database
     assertEquals(true, ticketDAO.updateTicket(ticketDAO.getTicket(MatReg))); //this instruction combines the both transactions needed
 }
+
+    @ParameterizedTest
+    @CsvSource({"true, ABCDEF"}) // case with or without discount ticket once exiting
+    void testParkingLotExit2(boolean discount, String MatReg) throws Exception {
+        //ARRANGE
+        if (discount == true) {
+            parkingSpotDAO = new ParkingSpotDAO();
+            ticketDAO = new TicketDAO();
+        }
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        testParkingACar(MatReg);
+        Thread.sleep(1000);
+
+        //ACT
+        parkingService.processExitingVehicle();
+
+        //VERIFY - Check that the fare generated and out time are populated correctly in the database
+        assertEquals(true, ticketDAO.updateTicket(ticketDAO.getTicket(MatReg))); //this instruction combines the both transactions needed
+    }
+
+    public class Sleeper {
+        public void sleep(long millis) throws InterruptedException {
+            Thread.sleep(millis);
+        }
+    }
 }
