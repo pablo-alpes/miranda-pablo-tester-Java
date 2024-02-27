@@ -91,17 +91,28 @@ public class TicketDAO {
         return false;
     }
 
+    /**
+     * Count of the Vehicle Registry Number by times of Out-Time found in the DB.
+     OutTime allows to detect the case is first entry.
+     * The query is performed in PROD environment.
+     */
     public boolean getNbTicket(String vehicleRegNumber) {
-        Ticket ticket = this.getTicket(vehicleRegNumber);
-        if (ticket == null) { // in case the database is empty
-            return false;
-        } else {
-            boolean firstTime = ticket.getOutTime() == null || ticket.getOutTime().equals(ticket.getInTime());
-            if (firstTime) { // if first time in the park
-                return false;
-            } else {
-                return ticket.getId() > 0;
-            }
+        Connection con = null;
+        try {
+            con = dataBaseConfig.getConnection();
+            PreparedStatement ps = con.prepareStatement("SELECT COUNT(OUT_TIME) FROM prod.ticket WHERE VEHICLE_REG_NUMBER = ?");
+            ps.setString(1, vehicleRegNumber);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            int countTickets = rs.getInt("count(OUT_TIME)");
+            dataBaseConfig.closeResultSet(rs);
+            dataBaseConfig.closePreparedStatement(ps);
+            if (countTickets > 0) return true;
+        } catch (Exception ex) {
+            logger.error("Error saving ticket info", ex);
+        } finally {
+            dataBaseConfig.closeConnection(con);
         }
+        return false;
     }
 }

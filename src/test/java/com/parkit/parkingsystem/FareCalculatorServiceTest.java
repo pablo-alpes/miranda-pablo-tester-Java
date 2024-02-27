@@ -1,3 +1,8 @@
+/**
+ * Unit testing for Fares with discounts and free rides if less than 30 minutes.
+ @author: Pablo Miranda
+ @date: 16-02-2024
+ */
 package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.constants.Fare;

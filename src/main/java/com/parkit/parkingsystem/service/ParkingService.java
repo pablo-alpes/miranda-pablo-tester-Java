@@ -27,15 +27,15 @@ public class ParkingService {
         this.ticketDAO = ticketDAO;
     }
 
-    public void processIncomingVehicle() {
+    public void processIncomingVehicle(Date inTimeSetter) {
         try{
             ParkingSpot parkingSpot = getNextParkingNumberIfAvailable();
             if(parkingSpot !=null && parkingSpot.getId() > 0){
                 String vehicleRegNumber = getVehichleRegNumber();
                 parkingSpot.setAvailable(false);
                 parkingSpotDAO.updateParking(parkingSpot);//allot this parking space and mark its availability as false
+                Date inTime = inTimeSetter;
 
-                Date inTime = new Date();
                 Ticket ticket = new Ticket();
                 //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
                 if (ticketDAO.getNbTicket(vehicleRegNumber)) { //NEW -- Adds the functionality of announcing the 5% discount for recurrent clients
@@ -57,6 +57,11 @@ public class ParkingService {
         }catch(Exception e){
             logger.error("Unable to process incoming vehicle",e);
         }
+    }
+    public void processIncomingVehicle() {
+        //Method overload to allow inTime setter or blank
+        Date now = new Date();
+        processIncomingVehicle(now);
     }
 
     private String getVehichleRegNumber() throws Exception {
@@ -101,7 +106,6 @@ public class ParkingService {
             }
         }
     }
-
     public void processExitingVehicle() {
         try{
             String vehicleRegNumber = getVehichleRegNumber();

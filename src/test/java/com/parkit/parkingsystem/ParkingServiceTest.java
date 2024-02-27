@@ -1,3 +1,10 @@
+/**
+ * Unit testing for ParkService.
+ * Usage of mocks for all the rest of dependencies and main scenarios of exit and entry.
+ @author: Pablo Miranda
+ @date: 18-02-2024
+ */
+
 package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.constants.ParkingType;
